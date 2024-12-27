@@ -36,6 +36,13 @@
     .error {
       color: red;
     }
+    .avg-heading {
+      margin-top: 20px;
+    }
+    .avg-heading p {
+      margin: 0;
+      font-size: 1em;
+    }
   </style>
 </head>
 <body>
@@ -47,14 +54,27 @@
   <p><strong>Accuracy:</strong> <span id="acc">N/A</span> meters</p>
   <p class="status" id="status">Waiting for location...</p>
   <p class="error" id="error"></p>
+
+  <!-- Optional averaging display -->
+  <div class="avg-heading" id="avg-heading" style="display:none;">
+    <p><strong>Averaged Latitude:</strong> <span id="avg-lat">N/A</span></p>
+    <p><strong>Averaged Longitude:</strong> <span id="avg-lon">N/A</span></p>
+    <p><strong>Sample Count:</strong> <span id="sample-count">0</span></p>
+  </div>
 </div>
 
 <script>
-  const latEl = document.getElementById('lat');
-  const lonEl = document.getElementById('lon');
-  const accEl = document.getElementById('acc');
-  const statusEl = document.getElementById('status');
-  const errorEl  = document.getElementById('error');
+  const latEl         = document.getElementById('lat');
+  const lonEl         = document.getElementById('lon');
+  const accEl         = document.getElementById('acc');
+  const statusEl      = document.getElementById('status');
+  const errorEl       = document.getElementById('error');
+
+  // Optional averaging display
+  const avgHeadingEl  = document.getElementById('avg-heading');
+  const avgLatEl      = document.getElementById('avg-lat');
+  const avgLonEl      = document.getElementById('avg-lon');
+  const sampleCountEl = document.getElementById('sample-count');
 
   // Options for watchPosition to request high accuracy
   const geoOptions = {
@@ -62,6 +82,12 @@
     maximumAge: 0,
     timeout: 60000 // 60 seconds
   };
+
+  // We'll store multiple "good" readings (e.g., accuracy < 10m) to get an averaged location
+  let stableLatSum = 0;
+  let stableLonSum = 0;
+  let stableCount = 0;
+  const desiredAccuracy = 10; // meters
 
   function success(position) {
     const { latitude, longitude, accuracy } = position.coords;
@@ -73,6 +99,19 @@
 
     statusEl.textContent = 'Location updated in real-time.';
     errorEl.textContent = '';
+
+    // If accuracy is below our threshold, collect readings for averaging
+    if (accuracy <= desiredAccuracy) {
+      stableLatSum += latitude;
+      stableLonSum += longitude;
+      stableCount++;
+      
+      // Show the "averaging" UI
+      avgHeadingEl.style.display = 'block';
+      avgLatEl.textContent = (stableLatSum / stableCount).toFixed(10);
+      avgLonEl.textContent = (stableLonSum / stableCount).toFixed(10);
+      sampleCountEl.textContent = stableCount;
+    }
   }
 
   function fail(err) {
