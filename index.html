@@ -43,6 +43,24 @@
       margin: 0;
       font-size: 1em;
     }
+    /* Optional Buttons */
+    .btn-container {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    button {
+      padding: 8px 15px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: #eee;
+    }
+    button:hover {
+      background: #ddd;
+    }
   </style>
 </head>
 <body>
@@ -61,6 +79,12 @@
     <p><strong>Averaged Longitude:</strong> <span id="avg-lon">N/A</span></p>
     <p><strong>Sample Count:</strong> <span id="sample-count">0</span></p>
   </div>
+
+  <!-- Extra buttons for manual refresh or resetting averages -->
+  <div class="btn-container">
+    <button id="refresh-btn">Refresh Location</button>
+    <button id="reset-btn">Reset Averages</button>
+  </div>
 </div>
 
 <script>
@@ -70,11 +94,15 @@
   const statusEl      = document.getElementById('status');
   const errorEl       = document.getElementById('error');
 
-  // Optional averaging display
+  // Optional averaging elements
   const avgHeadingEl  = document.getElementById('avg-heading');
   const avgLatEl      = document.getElementById('avg-lat');
   const avgLonEl      = document.getElementById('avg-lon');
   const sampleCountEl = document.getElementById('sample-count');
+
+  // Buttons
+  const refreshBtn    = document.getElementById('refresh-btn');
+  const resetBtn      = document.getElementById('reset-btn');
 
   // Options for watchPosition to request high accuracy
   const geoOptions = {
@@ -83,7 +111,7 @@
     timeout: 60000 // 60 seconds
   };
 
-  // We'll store multiple "good" readings (e.g., accuracy < 10m) to get an averaged location
+  // We'll store multiple "good" readings (e.g. accuracy < 10m) to get an averaged location
   let stableLatSum = 0;
   let stableLonSum = 0;
   let stableCount = 0;
@@ -105,7 +133,7 @@
       stableLatSum += latitude;
       stableLonSum += longitude;
       stableCount++;
-      
+
       // Show the "averaging" UI
       avgHeadingEl.style.display = 'block';
       avgLatEl.textContent = (stableLatSum / stableCount).toFixed(10);
@@ -119,12 +147,33 @@
     statusEl.textContent = 'Unable to retrieve location.';
   }
 
+  // Resets the sums & count so we can start new averages
+  function resetAverages() {
+    stableLatSum = 0;
+    stableLonSum = 0;
+    stableCount = 0;
+    avgHeadingEl.style.display = 'none'; // Hide the averaging UI until we collect a new reading
+  }
+
+  // Manually refresh location (single fix) using getCurrentPosition
+  // This does NOT stop watchPosition; it just gets one fresh fix on demand.
+  function refreshLocation() {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(success, fail, geoOptions);
+    } else {
+      errorEl.textContent = 'Geolocation is not supported by your browser.';
+    }
+  }
+
   // Continuously track the position
   if ('geolocation' in navigator) {
     navigator.geolocation.watchPosition(success, fail, geoOptions);
   } else {
     errorEl.textContent = 'Geolocation is not supported by your browser.';
   }
+
+  refreshBtn.addEventListener('click', refreshLocation);
+  resetBtn.addEventListener('click', resetAverages);
 </script>
 
 </body>
