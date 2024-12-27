@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Precise Coordinates</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex; 
+      flex-direction: column;
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+    }
+    .location-container {
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 90%;
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 10px;
+    }
+    p {
+      margin: 5px 0;
+      font-size: 1.1em;
+    }
+    .status {
+      margin-top: 10px;
+      color: #888;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+<div class="location-container">
+  <h1>Live Precise Coordinates</h1>
+  <p><strong>Latitude:</strong> <span id="lat">N/A</span></p>
+  <p><strong>Longitude:</strong> <span id="lon">N/A</span></p>
+  <p><strong>Accuracy:</strong> <span id="acc">N/A</span> meters</p>
+  <p class="status" id="status">Waiting for location...</p>
+  <p class="error" id="error"></p>
+</div>
+
+<script>
+  const latEl = document.getElementById('lat');
+  const lonEl = document.getElementById('lon');
+  const accEl = document.getElementById('acc');
+  const statusEl = document.getElementById('status');
+  const errorEl  = document.getElementById('error');
+
+  // Options for watchPosition to request high accuracy
+  const geoOptions = {
+    enableHighAccuracy: true, 
+    maximumAge: 0,
+    timeout: 60000 // 60 seconds
+  };
+
+  function success(position) {
+    const { latitude, longitude, accuracy } = position.coords;
+
+    // Show as many decimals as possible for maximum precision
+    latEl.textContent = latitude.toFixed(10);
+    lonEl.textContent = longitude.toFixed(10);
+    accEl.textContent = accuracy.toFixed(2);
+
+    statusEl.textContent = 'Location updated in real-time.';
+    errorEl.textContent = '';
+  }
+
+  function fail(err) {
+    errorEl.textContent = `ERROR: ${err.message}`;
+    statusEl.textContent = 'Unable to retrieve location.';
+  }
+
+  // Continuously track the position
+  if ('geolocation' in navigator) {
+    navigator.geolocation.watchPosition(success, fail, geoOptions);
+  } else {
+    errorEl.textContent = 'Geolocation is not supported by your browser.';
+  }
+</script>
+
+</body>
+</html>
